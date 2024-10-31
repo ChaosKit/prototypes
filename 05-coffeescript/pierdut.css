@@ -1,0 +1,67 @@
+body {
+    font-family: 'Lucida Grande', sans-serif;
+    font-size: 12px;
+}
+
+button {
+    margin: 0 5px;
+}
+
+select {
+    margin-right: 10px;
+}
+
+label {
+    display: block;
+}
+
+input.vertical {
+    -webkit-appearance: slider-vertical;
+    writing-mode: bt-lr;
+    display: inline-block;
+    width: 30px;
+    height: 130px;
+}
+
+.state {
+    color: #aaa;
+    font-size: 9px;
+    font-family: monospace;
+    margin-top: 10px;
+    word-break: break-all;
+}
+
+.hidden {
+    display: none;
+}
+
+.row {
+    overflow: hidden;
+}
+.column {
+    float: left;
+    margin: 0 20px;
+}
+
+.container {
+    margin: 50px auto;
+    width: 1354px;
+}
+
+.canvas-container { width: 1024px; }
+.control-container { width: 250px; }
+
+.controls {
+    margin: 10px 0;
+}
+.controls.offset {
+    margin-bottom: 40px;
+}
+
+#Canvas {
+    margin: auto;
+    display: block;
+    border: 1px solid #000;
+    border-bottom-width: 2px;
+    border-radius: 2px;
+}

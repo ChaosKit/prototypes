@@ -1,0 +1,179 @@
+@import url("https://rsms.me/inter/inter.css");
+html {
+  font-family: "Inter", sans-serif;
+}
+@supports (font-variation-settings: normal) {
+  html {
+    font-family: "Inter var", sans-serif;
+  }
+}
+
+html,
+body,
+h1 {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: #121212; /* surface */
+  font-size: 10px;
+  letter-spacing: 0.1px;
+}
+
+button {
+  background: none;
+  border: none;
+  border-radius: 2px;
+  color: #fde38a;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.7px;
+  line-height: 1;
+  padding: 8px 8px;
+  text-transform: uppercase;
+}
+button:not([disabled]):hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+button:not([disabled]):focus {
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+button[disabled] {
+  color: rgba(255, 255, 255, 0.38);
+}
+button i + span {
+  margin-left: 4px;
+}
+
+.hidden {
+  display: none !important;
+}
+.elevation-8 {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.14), 0 3px 10px rgba(0, 0, 0, 0.12),
+    0 5px 5px rgba(0, 0, 0, 0.2);
+}
+.elevation-24 {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 24px 38px rgba(0, 0, 0, 0.14), 0 9px 46px rgba(0, 0, 0, 0.12),
+    0 11px 15px rgba(0, 0, 0, 0.2);
+}
+.elevation-24.opaque {
+  background: #383838;
+}
+
+.panel {
+  padding: 0 8px;
+}
+.two-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.sidebar {
+  width: 300px;
+  height: 100%;
+  margin: 0 auto;
+}
+.sidebar h1 {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  line-height: 1;
+  padding: 8px 8px 0;
+  text-transform: uppercase;
+}
+
+.tree {
+  height: 170px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.blend {
+  display: flex;
+}
+
+.blend:hover .preview {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+.blend.selected .preview {
+  border-color: #fde38a; /** primary 200 */
+  background-color: rgba(255, 255, 255, 0.16);
+
+  /* elevation 1 */
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.14), 0 2px 1px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.preview {
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+}
+.preview:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+.preview img {
+  display: block;
+}
+.preview__name {
+  /*background: #fde38a;*/
+  /*color: #000;*/
+  color: rgba(255, 255, 255, 0.87);
+  display: block;
+  font-weight: 500;
+  padding: 4px;
+}
+
+.blend__preview {
+  align-self: flex-start;
+  padding: 8px;
+}
+
+.blend__formulas {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  padding: 8px 0 4px;
+}
+.blend__formula {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  color: rgba(255, 255, 255, 0.87);
+  cursor: default;
+  line-height: 1;
+  margin: 0 4px 4px 0;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+.blend__formula:hover {
+  background-color: rgba(255, 255, 255, 0.16);
+}
+
+.formula-picker {
+  display: grid;
+  position: absolute;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: min-content;
+  grid-gap: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 8px;
+  width: 272px; /* 8*4 + 80*3 */
+  max-height: 200px;
+}
+
+.formula-picker__formula img {
+  width: 100%;
+}

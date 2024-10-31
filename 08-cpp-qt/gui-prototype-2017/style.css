@@ -1,0 +1,48 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: url(flame.jpg) no-repeat center;
+  background-size: cover;
+}
+
+.fill-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.main {
+  display: grid;
+  grid-template-columns: 80px 1fr 260px 24px;
+  grid-template-rows: 100%;
+}
+
+.chrome {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.transform {
+  box-sizing: border-box;
+  height: 64px;
+}
+
+.transform + .transform {
+  margin-top: 8px;
+}
+
+.transform.blue {
+  box-shadow: inset 0 0 3px blue;
+}
+
+.transform.yellow {
+  box-shadow: inset 0 0 3px yellow;
+}

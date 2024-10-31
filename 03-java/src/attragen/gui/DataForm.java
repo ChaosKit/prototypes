@@ -1,0 +1,474 @@
+/*
+ * DataForm.java
+ *
+ * Created on 2010-02-06, 17:31:04
+ */
+
+package attragen.gui;
+
+import attragen.formulas.Formula;
+import java.text.ParseException;
+import javax.swing.table.DefaultTableModel;
+import ec.util.MersenneTwisterFast;
+import java.awt.geom.Point2D;
+import java.io.*;
+import java.util.Map;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+
+/**
+ *
+ * @author evol
+ */
+public class DataForm extends javax.swing.JFrame implements javax.swing.event.TableModelListener {
+    private MainForm parentform;
+    private boolean automaticChange = false;
+    private MersenneTwisterFast rnd = new MersenneTwisterFast();
+
+    /** Creates new form DataForm */
+    public DataForm() {
+        initComponents();
+
+        // Populate the combobox
+        try {
+            String[] formulas = attragen.formulas.Formula.listFormulas();
+            for (String f: formulas) {
+                cbFunkcja.addItem(f);
+            }
+        } catch (ClassNotFoundException e) {
+            JOptionPane.showMessageDialog(this, "Wystąpił błąd w trakcie ładowania listy funkcji.", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+        }
+
+        // Set the proper row count
+        setRowCount(getCurrentParameterCount());
+
+        // Setup the file dialog
+        fcDialog.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        fcDialog.addChoosableFileFilter(new AttractorFilter());
+
+        params.getModel().addTableModelListener(this);
+    }
+
+    /**
+     * Gets the parameter count of the selected formula
+     *
+     * @return The parameter count
+     */
+    private int getCurrentParameterCount() {
+        int count = 0;
+        try {
+            Class cFunction = Class.forName("attragen.formulas." + (String)cbFunkcja.getSelectedItem());
+            Formula f = (Formula)cFunction.newInstance();
+            count = f.parameterCount();
+        } catch (java.lang.ClassNotFoundException e) {
+        } catch (java.lang.IllegalAccessException e) {
+        } finally {
+            return count;
+        }
+    }
+
+    /**
+     * Sets the table's row count to a given value
+     *
+     * @param count The new row count
+     */
+    private void setRowCount(int count) {
+        automaticChange = true;
+        ((DefaultTableModel)params.getModel()).setRowCount(count);
+        automaticChange = false;
+    }
+
+    /**
+     * Calculates 12 parameters for formulas
+     *
+     * @param seed The seed for initializing the randomizer. If it's equal to -1, it's generated.
+     * @return An array with 12 parameters
+     */
+    public double[] generateParams(int seed) {
+        int count = getCurrentParameterCount();
+
+        double[] result = new double[count];
+
+        if (seed == -1) {
+            java.util.Random seedrnd = new java.util.Random();
+            seed = java.lang.Math.abs(seedrnd.nextInt());
+        }
+
+        rnd = new MersenneTwisterFast(seed);
+        for (int i=0; i<count; i++) {
+            // Range: -2..2
+            result[i] = 4 * (rnd.nextDouble() - 0.5);
+        }
+
+        return result;
+    }
+
+    private void generateValues(int seed) {
+        automaticChange = true;
+
+        double[] p = generateParams(seed);
+        int rowCount = getCurrentParameterCount();
+
+        for (int i=0; i<rowCount; i++) {
+            params.setValueAt(p[i], i, 0);
+        }
+
+        tStartX.setValue(rnd.nextDouble() - 0.5);
+        tStartY.setValue(rnd.nextDouble() - 0.5);
+
+        automaticChange = false;
+    }
+
+    public String getFormula() {
+        return (String) cbFunkcja.getSelectedItem();
+    }
+
+    public double[] getParameters() {
+        int rowCount = getCurrentParameterCount();
+
+        if (rowCount == 0) return new double[0];
+        if (params.getValueAt(0, 0) == null) return new double[0];
+
+        double[] result = new double[rowCount];
+        for (int i=0; i < rowCount; i++) {
+            result[i] = ((Number)params.getValueAt(i, 0)).doubleValue();
+        }
+
+        return result;
+    }
+
+    public boolean validStartPoint() {
+        return ((tStartX.getValue() != null) && (tStartY.getValue() != null));
+    }
+
+    public Point2D.Double getStartPoint() {
+        return new Point2D.Double(
+                ((Number)tStartX.getValue()).doubleValue(),
+                ((Number)tStartY.getValue()).doubleValue());
+    }
+
+    public void setStartPoint(Point2D.Double p) {
+        tStartX.setValue(p.x);
+        tStartY.setValue(p.y);
+    }
+
+    public void setParameters(double[] p) {
+        int rowCount = Math.min(p.length, getCurrentParameterCount());
+
+        for (int i=0; i<rowCount; i++) {
+            params.setValueAt(p[i], i, 0);
+        }
+    }
+
+    public void setParentForm(MainForm form) {
+        parentform = form;
+    }
+
+    /** This method is called from within the constructor to
+     * initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is
+     * always regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        fcDialog = new javax.swing.JFileChooser();
+        cbFunkcja = new javax.swing.JComboBox();
+        jLabel1 = new javax.swing.JLabel();
+        bClear = new javax.swing.JButton();
+        jLabel2 = new javax.swing.JLabel();
+        bClose = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        params = new javax.swing.JTable();
+        tNumer = new javax.swing.JFormattedTextField();
+        bLoadData = new javax.swing.JButton();
+        bSaveData = new javax.swing.JButton();
+        bLoadFile = new javax.swing.JButton();
+        tStartY = new javax.swing.JFormattedTextField();
+        tStartX = new javax.swing.JFormattedTextField();
+        jLabel3 = new javax.swing.JLabel();
+
+        fcDialog.setDialogTitle("Wybierz plik atraktora");
+
+        setTitle("Wybierz dane");
+        setResizable(false);
+
+        cbFunkcja.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbFunkcjaActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setLabelFor(cbFunkcja);
+        jLabel1.setText("Funkcja:");
+
+        bClear.setText("Wyczyść");
+        bClear.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                bClearMouseClicked(evt);
+            }
+        });
+
+        jLabel2.setLabelFor(tNumer);
+        jLabel2.setText("Numer atraktora:");
+
+        bClose.setText("Zamknij");
+        bClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bCloseActionPerformed(evt);
+            }
+        });
+
+        params.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null},
+                {null},
+                {null},
+                {null},
+                {null},
+                {null},
+                {null},
+                {null},
+                {null},
+                {null},
+                {null},
+                {null}
+            },
+            new String [] {
+                "Współczynniki"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Double.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        jScrollPane1.setViewportView(params);
+
+        tNumer.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#0"))));
+        tNumer.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                tNumerPropertyChange(evt);
+            }
+        });
+
+        bLoadData.setText("Wczytaj z atraktora");
+        bLoadData.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bLoadDataActionPerformed(evt);
+            }
+        });
+
+        bSaveData.setText("Zapisz");
+        bSaveData.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bSaveDataActionPerformed(evt);
+            }
+        });
+
+        bLoadFile.setText("Wczytaj z pliku");
+        bLoadFile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bLoadFileActionPerformed(evt);
+            }
+        });
+
+        tStartY.setColumns(12);
+        tStartY.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#.#############"))));
+
+        tStartX.setColumns(12);
+        tStartX.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.NumberFormatter(new java.text.DecimalFormat("#.#############"))));
+
+        jLabel3.setText("Punkt początkowy:");
+
+        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createSequentialGroup()
+                        .add(jLabel1)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(cbFunkcja, 0, 354, Short.MAX_VALUE))
+                    .add(layout.createSequentialGroup()
+                        .add(jLabel2)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(tNumer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(bClear))
+                    .add(layout.createSequentialGroup()
+                        .add(bLoadData)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(bLoadFile)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(bSaveData)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 31, Short.MAX_VALUE)
+                        .add(bClose))
+                    .add(layout.createSequentialGroup()
+                        .add(jLabel3)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 104, Short.MAX_VALUE)
+                        .add(tStartX, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(tStartY, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cbFunkcja, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel1))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(bClear)
+                    .add(jLabel2)
+                    .add(tNumer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 176, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(tStartY, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(tStartX, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel3))
+                .add(18, 18, 18)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(bClose)
+                    .add(bLoadData)
+                    .add(bLoadFile)
+                    .add(bSaveData))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    @Override
+    public void tableChanged(javax.swing.event.TableModelEvent e) {
+        if (!automaticChange) {
+            tNumer.setText("");
+        }
+    }
+
+    private void bClearMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_bClearMouseClicked
+        clearData();
+    }//GEN-LAST:event_bClearMouseClicked
+
+    private void cbFunkcjaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbFunkcjaActionPerformed
+        setRowCount(getCurrentParameterCount());
+
+        if (tNumer.getValue() != null) {
+            int seed = ((Number)tNumer.getValue()).intValue();
+            generateValues(seed);
+        }
+    }//GEN-LAST:event_cbFunkcjaActionPerformed
+
+    private void bCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bCloseActionPerformed
+        setVisible(false);
+    }//GEN-LAST:event_bCloseActionPerformed
+
+    private void tNumerPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_tNumerPropertyChange
+        if (evt.getPropertyName().equals("value")) {
+            if (evt.getNewValue() != null) {
+                int seed = ((Number)evt.getNewValue()).intValue();
+
+                generateValues(seed);
+            } else {
+                clearData();
+            }
+        }
+    }//GEN-LAST:event_tNumerPropertyChange
+
+    private void bLoadDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bLoadDataActionPerformed
+        if (!parentform.gen.isFirstRun() && !parentform.gen.isRunning()) {
+            setParameters(parentform.gen.getParameters());
+            setStartPoint(parentform.gen.getStartPoint());
+        }
+    }//GEN-LAST:event_bLoadDataActionPerformed
+
+    private void bSaveDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bSaveDataActionPerformed
+        int result = fcDialog.showSaveDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File f = fcDialog.getSelectedFile();
+
+            String path = f.getPath();
+            if (!path.endsWith(".attr")) path += ".attr";
+
+            f = new File(path);
+
+            try {
+                DataHandler.save(f, (String)cbFunkcja.getSelectedItem(), getParameters(), getStartPoint());
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Nie można było zapisać atraktora.", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_bSaveDataActionPerformed
+
+    private void bLoadFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bLoadFileActionPerformed
+        int result = fcDialog.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File f = fcDialog.getSelectedFile();
+
+            try {
+                Map<String, Object> data = DataHandler.load(f);
+
+                cbFunkcja.setSelectedItem((String)data.get("formula"));
+
+                setStartPoint((Point2D.Double) data.get("start"));
+
+                // OMGWTF
+                Double[] classpars = (Double[])data.get("params");
+                double[] pars = new double[classpars.length];
+                for (int i=0; i<pars.length; i++) {
+                    pars[i] = classpars[i].doubleValue();
+                }
+
+                setParameters(pars);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Nie można było otworzyć pliku.", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_bLoadFileActionPerformed
+
+    /**
+     * Clears all data, allowing it to be randomly generated.
+     */
+    public void clearData() {
+        tNumer.setText("");
+        tStartX.setText("");
+        tStartY.setText("");
+        try {
+            tNumer.commitEdit();
+            tStartX.commitEdit();
+            tStartY.commitEdit();
+        } catch (ParseException ex) {}
+        setRowCount(0);
+        setRowCount(getCurrentParameterCount());
+    }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton bClear;
+    private javax.swing.JButton bClose;
+    private javax.swing.JButton bLoadData;
+    private javax.swing.JButton bLoadFile;
+    private javax.swing.JButton bSaveData;
+    public javax.swing.JComboBox cbFunkcja;
+    private javax.swing.JFileChooser fcDialog;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable params;
+    private javax.swing.JFormattedTextField tNumer;
+    private javax.swing.JFormattedTextField tStartX;
+    private javax.swing.JFormattedTextField tStartY;
+    // End of variables declaration//GEN-END:variables
+
+}

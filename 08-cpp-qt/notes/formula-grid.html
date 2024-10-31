@@ -1,0 +1,868 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Formulas visualized on grids</title>
+  <style type="text/css">
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    body {
+      font-family: sans-serif;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      width: 512px;
+      height: 512px;
+    }
+    .ui {
+      margin-left: 20px;
+      width: 250px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="C" width="1024" height="1024"></canvas>
+  <div class="ui">
+    <div class="ui-row">
+      <select id="formulas"></select>
+    </div>
+    <div class="ui-row">
+      Weight:
+      <input id="weight" type="range" min="0" max="2" value="1" step="any">
+      <span id="weightNum">1</span>
+    </div>
+    <div class="ui-row">
+      Rotation:
+      <input id="rotation" type="range" min="0" max="360" value="0" step="any">
+      <span id="rotationNum">0</span>
+    </div>
+    <div class="ui-row">
+      Scale:
+      <input id="scale" type="range" min="-2" max="3" value="1" step="any">
+      <span id="scaleNum">1</span>
+    </div>
+    <div class="ui-row">
+      Translation:
+      <input id="translationX" type="range" min="-2" max="2" value="0" step="any">
+      <span id="translationXNum">0</span>
+      <input id="translationY" type="range" min="-2" max="2" value="0" step="any">
+      <span id="translationYNum">0</span>
+    </div>
+    <div class="ui-row" id="params">
+    </div>
+    <div class="ui-row">
+      <button id="reset">Reset all</button>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    const GRID_UNIT_PX = 256
+    const GRID_CELL_NUM = 32
+    const SCATTERPLOT_POINTS = 16384
+    const BOUNDS = {
+      x: [-1, 1],
+      y: [-1, 1]
+    }
+
+    // Formulas
+
+    const FORMULAS = {
+      linear: (p) => p,
+      sinusoidal: ({x, y}) => ({x: Math.sin(x), y: Math.sin(y)}),
+      spherical ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        return {
+          x: x / (r * r),
+          y: y / (r * r)
+        }
+      },
+      swirl ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        const r2 = r * r
+        return {
+          x: x * Math.sin(r2) - y * Math.cos(r2),
+          y: x * Math.cos(r2) + y * Math.sin(r2)
+        }
+      },
+      horseshoe ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        return {
+          x: (x - y) * (x + y) / r,
+          y: 2 * x * y
+        }
+      },
+      polar ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        return {
+          x: rho / Math.PI,
+          y: r - 1
+        }
+      },
+      handkerchief ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        return {
+          x: r * Math.sin(rho + r),
+          y: r * Math.cos(rho - r)
+        }
+      },
+      heart ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        return {
+          x: r * Math.sin(rho * r),
+          y: r * -Math.cos(rho * r)
+        }
+      },
+      disc ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        return {
+          x: rho / Math.PI * Math.sin(Math.PI * r),
+          y: rho / Math.PI * Math.cos(Math.PI * r)
+        }
+      },
+      spiral ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        return {
+          x: (Math.cos(rho) + Math.sin(r)) / r,
+          y: (Math.sin(rho) - Math.cos(r)) / r
+        }
+      },
+      hyperbolic ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        return {
+          x: Math.sin(rho) / r,
+          y: r * Math.cos(rho)
+        }
+      },
+      diamond ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        return {
+          x: Math.sin(rho) * Math.cos(r),
+          y: Math.cos(rho) * Math.sin(r)
+        }
+      },
+      ex ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        const p0 = Math.sin(rho + r)
+        const p1 = Math.cos(rho - r)
+        return {
+          x: r * (Math.pow(p0, 3) + Math.pow(p1, 3)),
+          y: r * (Math.pow(p0, 3) - Math.pow(p1, 3))
+        }
+      },
+      julia ({x, y}) {
+        const sqrtR = Math.sqrt(Math.sqrt(x * x + y * y))
+        const rho = Math.atan2(x, y)
+        const omega = (Math.random() < 0.5) * Math.PI
+        return {
+          x: sqrtR * Math.cos(rho / 2 + omega),
+          y: sqrtR * Math.sin(rho / 2 + omega)
+        }
+      },
+      bent ({x, y}) {
+        return {
+          x: (x >= 0) ? x : x * 2,
+          y: (y >= 0) ? y : y / 2
+        }
+      },
+      waves ({x, y}, [a, b, c, d, e, f]) {
+        const c2 = c * c
+        const f2 = f * f
+        return {
+          x: x + b * Math.sin(y / c2),
+          y: y + e * Math.sin(x / f2)
+        }
+      },
+      fisheye ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        return {
+          x: 2 / (r + 1) * y,
+          y: 2 / (r + 1) * x
+        }
+      },
+      popcorn ({x, y}, [a, b, c, d, e, f]) {
+        return {
+          x: x + c * Math.sin(Math.tan(3 * y)),
+          y: y + f * Math.sin(Math.tan(3 * x))
+        }
+      },
+      exponential ({x, y}) {
+        return {
+          x: Math.exp(x - 1) * Math.cos(Math.PI * y),
+          y: Math.exp(x - 1) * Math.sin(Math.PI * y)
+        }
+      },
+      power ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        return {
+          x: Math.pow(r, Math.sin(rho)) * Math.cos(rho),
+          y: Math.pow(r, Math.sin(rho)) * Math.sin(rho)
+        }
+      },
+      cosine ({x, y}) {
+        return {
+          x: Math.cos(Math.PI * x) * Math.cosh(y),
+          y: -Math.sin(Math.PI * x) * Math.sinh(y)
+        }
+      },
+      rings ({x, y}, [a, b, c, d, e, f]) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        const c2 = c * c
+        const sth = (r + c2) % (2 * c2) - c2 + r * (1 - c2)
+        return {
+          x: sth * Math.cos(rho),
+          y: sth * Math.sin(rho)
+        }
+      },
+      fan ({x, y}, [a, b, c, d, e, f]) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        const t = Math.PI * c * c
+        if ((rho + f) % t > t / 2) {
+          return {
+            x: r * Math.cos(rho - t / 2),
+            y: r * Math.sin(rho - t / 2)
+          }
+        } else {
+          return {
+            x: r * Math.cos(rho + t / 2),
+            y: r * Math.sin(rho + t / 2)
+          }
+        }
+      },
+      blob ({x, y}, _, params) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        const low = params.get('low')
+        const high = params.get('high')
+        const waves = params.get('waves')
+
+        const factor = r * (low + (high - low) / 2 * (Math.sin(waves * rho) + 1))
+        return {
+          x: factor * Math.cos(rho),
+          y: factor * Math.sin(rho)
+        }
+      },
+      deJong ({x, y}, _, params) {
+        const a = params.get('a')
+        const b = params.get('b')
+        const c = params.get('c')
+        const d = params.get('d')
+        return {
+          x: Math.sin(a * y) - Math.cos(b * x),
+          y: Math.sin(c * x) - Math.cos(d * y)
+        }
+      },
+      fan2 ({x, y}, _, params) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        const px = params.get('x')
+        const p1 = Math.PI * px * px
+        const p2 = params.get('y')
+        const t = rho + p2 - p1 * Math.trunc(2 * rho * p2 / p1)
+
+        if (t > p1 / 2) {
+          return {
+            x: r * Math.sin(rho - p1 / 2),
+            y: r * Math.cos(rho - p1 / 2)
+          }
+        } else {
+          return {
+            x: r * Math.sin(rho + p1 / 2),
+            y: r * Math.cos(rho + p1 / 2)
+          }
+        }
+      },
+      rings2 ({x, y}, _, params) {
+        const r = Math.sqrt(x * x + y * y)
+        const rho = Math.atan2(x, y)
+        const val = params.get('val')
+        const p = val * val
+        const t = r - 2 * p * Math.trunc((r + p) / (2 * p)) + r * (1 - p)
+        return {
+          x: t * Math.sin(rho),
+          y: t * Math.cos(rho)
+        }
+      },
+      eyefish ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        return {
+          x: 2 / (r + 1) * x,
+          y: 2 / (r + 1) * y
+        }
+      },
+      bubble ({x, y}) {
+        const r = Math.sqrt(x * x + y * y)
+        return {
+          x: 4 / (r * r + 4) * x,
+          y: 4 / (r * r + 4) * y
+        }
+      },
+      cylinder ({x, y}) {
+        return {
+          x: Math.sin(x),
+          y
+        }
+      },
+      perspective ({x, y}, _, params) {
+        const angle = params.get('angle')
+        const dist = params.get('dist')
+        const factor = dist / (dist - y * Math.sin(angle))
+        return {
+          x: factor * x,
+          y: factor * y * Math.cos(angle)
+        }
+      },
+      noise ({x, y}) {
+        const z1 = Math.random()
+        const z2 = Math.random()
+        return {
+          x: z1 * x * Math.cos(2 * Math.PI * z2),
+          y: z1 * y * Math.sin(2 * Math.PI * z2)
+        }
+      },
+      juliaN ({x, y}, _, params) {
+        const p1 = params.get('power')
+        const p2 = params.get('dist')
+        const p3 = Math.trunc(Math.abs(p1) * Math.random())
+        const r = Math.sqrt(x * x + y * y)
+        const phi = Math.atan2(y, x)
+        const t = (phi + 2 * Math.PI * p3) / p1
+        const factor = Math.pow(r, p2 / p1)
+        return {
+          x: factor * Math.cos(t),
+          y: factor * Math.sin(t)
+        }
+      },
+      juliaScope ({x, y}, _, params) {
+        const p1 = params.get('power')
+        const p2 = params.get('dist')
+        const p3 = Math.trunc(Math.abs(p1) * Math.random())
+        const r = Math.sqrt(x * x + y * y)
+        const phi = Math.atan2(y, x)
+        const delta = (Math.random() < 0.5) ? -1 : 1
+        const t = (delta * phi + 2 * Math.PI * p3) / p1
+        const factor = Math.pow(r, p2 / p1)
+        return {
+          x: factor * Math.cos(t),
+          y: factor * Math.sin(t)
+        }
+      },
+      blur ({x, y}) {
+        const z1 = Math.random()
+        const z2 = Math.random()
+        return {
+          x: z1 * Math.cos(2 * Math.PI * z2),
+          y: z1 * Math.sin(2 * Math.PI * z2)
+        }
+      },
+      gaussian ({x, y}) {
+        const sum =
+          Math.random() - 2 + Math.random() - 2 + Math.random() - 2 + Math.random() - 2
+        const r5 = Math.random()
+        return {
+          x: sum * Math.cos(2 * Math.PI * r5),
+          y: sum * Math.sin(2 * Math.PI * r5)
+        }
+      },
+      radialBlur ({x, y}, _, params, weight) {
+        const r = Math.sqrt(x * x + y * y)
+        const phi = Math.atan2(y, x)
+        const p1 = params.get('angle') * Math.PI / 2
+        const sum =
+          Math.random() - 2 + Math.random() - 2 + Math.random() - 2 + Math.random() - 2
+        const t1 = weight * sum
+        const t2 = phi + t1 * Math.sin(p1)
+        const t3 = t1 * Math.cos(p1) - 1
+
+        return {
+          x: (r * Math.cos(t2) + t3 * x) / weight,
+          y: (r * Math.sin(t2) + t3 * y) / weight
+        }
+      },
+      pie ({x, y}, _, params) {
+        const slices = params.get('slices')
+        const rotation = params.get('rotation')
+        const thickness = params.get('thickness')
+
+        const t1 = Math.trunc(Math.random() * slices + 0.5)
+        const t2 = rotation + (2 * Math.PI / slices) * (t1 + Math.random() * thickness)
+        const rnd = Math.random()
+        return {
+          x: rnd * Math.cos(t2),
+          y: rnd * Math.sin(t2)
+        }
+      },
+      ngon ({x, y}, _, params) {
+        const power = params.get('power')
+        const angle = 2 * Math.PI / params.get('sides')
+        const corners = params.get('corners')
+        const circle = params.get('circle')
+        const r = Math.sqrt(x * x + y * y)
+        const phi = Math.atan2(y, x)
+
+        const t3 = phi - angle * Math.floor(phi / angle)
+        const t4 = (t3 > angle / 2) ? t3 : t3 - angle
+        const k = (corners * (1 / Math.cos(t4) - 1) + circle) / Math.pow(r, power)
+        return {
+          x: k * x,
+          y: k * y
+        }
+      },
+      curl ({x, y}, _, params) {
+        const c1 = params.get('c1')
+        const c2 = params.get('c2')
+
+        const t1 = 1 + c1 * x + c2 * (x * x - y * y)
+        const t2 = c1 * y + 2 * c2 * x * y
+        const factor = 1 / (t1 * t1 + t2 * t2)
+        return {
+          x: factor * (x * t1 + y * t2),
+          y: factor * (y * t1 - x * t2)
+        }
+      },
+      rectangles ({x, y}, _, params) {
+        const p1 = params.get('x')
+        const p2 = params.get('y')
+        return {
+          x: (2 * Math.floor(x / p1) + 1) * p1 - x,
+          y: (2 * Math.floor(y / p2) + 1) * p2 - y
+        }
+      },
+      arch ({x, y}, _, __, weight) {
+        const rnd = Math.random()
+        return {
+          x: Math.sin(rnd * Math.PI * weight),
+          y: Math.pow(Math.sin(rnd * Math.PI * weight), 2) /
+              Math.cos(rnd * Math.PI * weight)
+        }
+      },
+      tangent ({x, y}) {
+        return {
+          x: Math.sin(x) / Math.cos(y),
+          y: Math.tan(y)
+        }
+      },
+      square ({x, y}) {
+        return {
+          x: Math.random() - 0.5,
+          y: Math.random() - 0.5
+        }
+      },
+      rays ({x, y}, _, __, weight) {
+        const r = Math.sqrt(x * x + y * y)
+        const factor = weight * Math.tan(Math.random() * Math.PI * weight) / (r * r)
+        return {
+          x: factor * Math.cos(x),
+          y: factor * Math.sin(y)
+        }
+      },
+      blade ({x, y}, _, __, weight) {
+        const r = Math.sqrt(x * x + y * y)
+        const sth = Math.random() * r * weight
+        return {
+          x: x * (Math.cos(sth) + Math.sin(sth)),
+          y: x * (Math.cos(sth) - Math.sin(sth))
+        }
+      },
+      secant ({x, y}, _, __, weight) {
+        const r = Math.sqrt(x * x + y * y)
+        return {
+          x,
+          y: 1 / (weight * Math.cos(weight * r))
+        }
+      },
+      twintrian ({x, y}, _, __, weight) {
+        const r = Math.sqrt(x * x + y * y)
+        const sth = Math.random() * r * weight
+        const t = Math.log10(Math.pow(Math.sin(sth), 2)) + Math.cos(sth)
+        return {
+          x: x * t,
+          y: x * (t - Math.PI * Math.sin(sth))
+        }
+      },
+      cross ({x, y}) {
+        const lol = x * x - y * y
+        const factor = Math.sqrt(1 / (lol * lol))
+        return {
+          x: x * factor,
+          y: y * factor
+        }
+      },
+      drain ({x, y}, _, params) {
+        const a = params.get('a')
+        const b = params.get('b')
+        const c = params.get('c')
+        const d = params.get('d')
+        return {
+          x: y + a * Math.sign(x) * Math.sqrt(Math.abs(b * x - c)),
+          y: d - x
+        }
+      },
+      tinkerbell ({x, y}, _, params) {
+        const a = params.get('a')
+        const b = params.get('b')
+        const c = params.get('c')
+        const d = params.get('d')
+        return {
+          x: x * x - y * y + a * x + b * y,
+          y: 2 * x * y + c * x + d * y
+        }
+      }
+    }
+    const USE_SCATTERPLOT = new Set([
+      'julia',
+      'noise',
+      'juliaN',
+      'juliaScope',
+      'blur',
+      'gaussian',
+      'radialBlur',
+      'pie',
+      'arch',
+      'square',
+      'rays',
+      'blade',
+      'twintrian'
+    ])
+
+    function float (name) {
+      return {name, type: 'float'}
+    }
+    function uint (name) {
+      return {name, type: 'uint'}
+    }
+
+    const PARAMETERS = {
+      blob: [float('high'), float('low'), uint('waves')],
+      deJong: [float('a'), float('b'), float('c'), float('d')],
+      fan2: [float('x'), float('y')],
+      rings2: [float('val')],
+      perspective: [float('angle'), float('dist')],
+      juliaN: [float('power'), float('dist')],
+      juliaScope: [float('power'), float('dist')],
+      radialBlur: [float('angle')],
+      pie: [uint('slices'), float('rotation'), float('thickness')],
+      ngon: [float('power'), uint('sides'), float('corners'), float('circle')],
+      curl: [float('c1'), float('c2')],
+      rectangles: [float('x'), float('y')],
+      drain: [float('a'), float('b'), float('c'), float('d')],
+      tinkerbell: [float('a'), float('b'), float('c'), float('d')]
+    }
+
+    // Rendering
+
+    const canvas = document.getElementById('C')
+    const ctx = canvas.getContext('2d')
+    const width = canvas.width
+    const height = canvas.height
+
+    function transformIndex (x, y) {
+      return {
+        x: x * (BOUNDS.x[1] - BOUNDS.x[0]) / GRID_CELL_NUM + BOUNDS.x[0],
+        y: y * (BOUNDS.y[1] - BOUNDS.y[0]) / GRID_CELL_NUM + BOUNDS.y[0]
+      }
+    }
+
+    function applyFormula (point, formula, weight, transform, params) {
+      const newPoint = formula(point, transform, params, weight)
+      return {
+        x: weight * newPoint.x + (1.0 - weight) * point.x,
+        y: weight * newPoint.y + (1.0 - weight) * point.y
+      }
+    }
+
+    function applyTransform ({x, y}, [a, b, c, d, e, f]) {
+      return {
+        x: a * x + b * y + c,
+        y: d * x + e * y + f
+      }
+    }
+
+    function drawGrid (transformPoint) {
+      ctx.save()
+
+      ctx.beginPath()
+      for (let x = 0; x <= GRID_CELL_NUM; x++) {
+        for (let y = 0; y <= GRID_CELL_NUM; y++) {
+          const position = transformPoint(transformIndex(x, y))
+
+          if (x < GRID_CELL_NUM) {
+            const right = transformPoint(transformIndex(x + 1, y))
+            ctx.moveTo(position.x * GRID_UNIT_PX, position.y * GRID_UNIT_PX)
+            ctx.lineTo(right.x * GRID_UNIT_PX, right.y * GRID_UNIT_PX)
+          }
+          if (y < GRID_CELL_NUM) {
+            const bottom = transformPoint(transformIndex(x, y + 1))
+            ctx.moveTo(position.x * GRID_UNIT_PX, position.y * GRID_UNIT_PX)
+            ctx.lineTo(bottom.x * GRID_UNIT_PX, bottom.y * GRID_UNIT_PX)
+          }
+        }
+      }
+      ctx.stroke()
+
+      ctx.restore()
+    }
+
+    function drawScatterplot (transformPoint) {
+      for (let i = 0; i < SCATTERPLOT_POINTS; i++) {
+        const point = {
+          x: Math.random() * (BOUNDS.x[1] - BOUNDS.x[0]) + BOUNDS.x[0],
+          y: Math.random() * (BOUNDS.y[1] - BOUNDS.y[0]) + BOUNDS.y[0]
+        }
+        const position = transformPoint(point)
+
+        ctx.fillRect(position.x * GRID_UNIT_PX, position.y * GRID_UNIT_PX, 1, 1)
+      }
+    }
+
+    // Application logic
+
+    let currentFormula = FORMULAS.linear
+    let currentWeight = 1.0
+    let shouldDrawScatterplot = false
+    let currentTransform = [1, 0, 0, 0, 1, 0]  // Identity matrix
+    let currentParams = new Map()
+
+    function render () {
+      ctx.save()
+      ctx.clearRect(0, 0, width, height)
+      ctx.translate(width / 2, height / 2)
+
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)'
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'
+      drawGrid((point) => applyTransform(point, currentTransform))
+      ctx.strokeStyle = '#000'
+      ctx.fillStyle = '#000'
+
+      const transformPoint = (point) =>
+          applyFormula(
+              applyTransform(point, currentTransform),
+              currentFormula, currentWeight, currentTransform, currentParams)
+
+      if (shouldDrawScatterplot) {
+        drawScatterplot(transformPoint)
+      } else {
+        drawGrid(transformPoint)
+      }
+
+      ctx.restore()
+    }
+
+    function calculateTransform () {
+      const rotationEl = document.getElementById('rotation')
+      const scaleEl = document.getElementById('scale')
+      const translationXEl = document.getElementById('translationX')
+      const translationYEl = document.getElementById('translationY')
+
+      const scale = scaleEl.valueAsNumber
+      const translation = {
+        x: translationXEl.valueAsNumber,
+        y: translationYEl.valueAsNumber
+      }
+      const angle = rotationEl.valueAsNumber / 180 * Math.PI
+      const sin = Math.sin(angle)
+      const cos = Math.cos(angle)
+
+      currentTransform = [
+        scale * cos,
+        scale * -sin,
+        scale * (translation.x * cos - translation.y * sin),
+        scale * sin,
+        scale * cos,
+        scale * (translation.x * sin + translation.y * cos)
+      ]
+    }
+
+    function generateParamsUi () {
+      const root = document.getElementById('params')
+      const formulaName = document.getElementById('formulas').value
+
+      root.innerHTML = '' // Clear
+      const params = PARAMETERS[formulaName] || []
+      for (const {name, type} of params) {
+        const el = document.createElement('div')
+        el.textContent = name + ' '
+
+        const input = document.createElement('input')
+        input.type = 'number'
+        input.value = 0
+        if (type === 'uint') {
+          input.min = 0
+          input.step = 1
+        } else {
+          input.step = 0.1
+        }
+
+        const button = document.createElement('button')
+        button.textContent = 'Reset'
+
+        input.oninput = () => {
+          currentParams.set(name, input.valueAsNumber)
+          render()
+        }
+        button.onclick = () => {
+          currentParams.set(name, 0)
+          input.value = 0
+          render()
+        }
+
+        el.appendChild(input)
+        el.appendChild(document.createTextNode(' '))
+        el.appendChild(button)
+        root.appendChild(el)
+      }
+    }
+
+    function clearParams () {
+      const formulaName = document.getElementById('formulas').value
+
+      currentParams.clear()
+      const params = PARAMETERS[formulaName] || []
+      for (const {name} of params) {
+        currentParams.set(name, 0)
+      }
+
+      const root = document.getElementById('params')
+      for (const row of root.children) {
+        const input = row.querySelector('input')
+        input.value = 0
+      }
+    }
+
+    function setupUi () {
+      const select = document.getElementById('formulas')
+      const weight = document.getElementById('weight')
+      const weightNum = document.getElementById('weightNum')
+      const rotation = document.getElementById('rotation')
+      const scale = document.getElementById('scale')
+      const translationX = document.getElementById('translationX')
+      const translationY = document.getElementById('translationY')
+      const rotationNum = document.getElementById('rotationNum')
+      const scaleNum = document.getElementById('scaleNum')
+      const translationXNum = document.getElementById('translationXNum')
+      const translationYNum = document.getElementById('translationYNum')
+      const reset = document.getElementById('reset')
+
+      for (const [name, formula] of Object.entries(FORMULAS)) {
+        const option = document.createElement('option')
+        option.value = name
+        option.selected = formula === currentFormula
+        option.textContent = name
+
+        select.appendChild(option)
+      }
+
+      select.addEventListener('change', () => {
+        currentFormula = FORMULAS[select.value]
+        shouldDrawScatterplot = USE_SCATTERPLOT.has(select.value)
+
+        generateParamsUi()
+        clearParams()
+        render()
+      })
+
+      weight.addEventListener('input', () => {
+        currentWeight = weight.valueAsNumber
+        weightNum.textContent = Math.round(currentWeight * 100) / 100
+        render()
+      })
+
+      weightNum.addEventListener('dblclick', () => {
+        currentWeight = 1.0
+        weight.value = 1
+        weightNum.textContent = '1'
+        render()
+      })
+
+      rotation.addEventListener('input', () => {
+        rotationNum.textContent = Math.round(rotation.valueAsNumber)
+        calculateTransform()
+        render()
+      })
+
+      rotationNum.addEventListener('dblclick', () => {
+        rotation.value = 0
+        rotationNum.textContent = '0'
+        calculateTransform()
+        render()
+      })
+
+      scale.addEventListener('input', () => {
+        scaleNum.textContent = Math.round(scale.valueAsNumber * 100) / 100
+        calculateTransform()
+        render()
+      })
+
+      scaleNum.addEventListener('dblclick', () => {
+        scale.value = 1
+        scaleNum.textContent = '1'
+        calculateTransform()
+        render()
+      })
+
+      translationX.addEventListener('input', () => {
+        translationXNum.textContent = Math.round(translationX.valueAsNumber * 100) / 100
+        calculateTransform()
+        render()
+      })
+
+      translationXNum.addEventListener('dblclick', () => {
+        translationX.value = 0
+        translationXNum.textContent = '0'
+        calculateTransform()
+        render()
+      })
+
+      translationY.addEventListener('input', () => {
+        translationYNum.textContent = Math.round(translationY.valueAsNumber * 100) / 100
+        calculateTransform()
+        render()
+      })
+
+      translationYNum.addEventListener('dblclick', () => {
+        translationY.value = 0
+        translationYNum.textContent = '0'
+        calculateTransform()
+        render()
+      })
+
+      reset.addEventListener('click', () => {
+        currentWeight = 1.0
+        weight.value = 1
+        weightNum.textContent = '1'
+        rotation.value = 0
+        rotationNum.textContent = '0'
+        scale.value = 1
+        scaleNum.textContent = '1'
+        translationX.value = 0
+        translationXNum.textContent = '0'
+        translationY.value = 0
+        translationYNum.textContent = '0'
+        clearParams()
+        calculateTransform()
+        render()
+      })
+    }
+
+    setupUi()
+    render()
+  </script>
+</body>
+</html>

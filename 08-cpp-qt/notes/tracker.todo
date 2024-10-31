@@ -1,0 +1,196 @@
+Ideas:
+  ☐ Figure out how to improve how derived data is represented in the UI
+    Example: the color preview of a blend depends on the color map and the value stored in the blend. When either dependency changes, it should reflect the current state correctly. Currently the process is very manual and prone to errors.
+    This might require to think deeper about UI state management in general.
+  ☐ Detach the UI state from core structures
+    Why: mostly because transforms in the UI are best represented as translation/rotation/scale. Core doesn't care about this.
+    Also, this means that the IO layer shouldn't be tied to core structures — the core shouldn't care about file formats. Actually, the UI could then
+    operate on the IO proto directly.
+
+    This would split the responsibilities as follows;
+
+    * core
+      * ast
+      * structures
+      * interfaces
+      * interpreter, etc.
+    * state — technically independent, UI depends on it though
+    * ui
+      * io
+      * intermediate state
+      * rest of the UI
+  ☐ Base the UI on the new, simpler AST
+    I'm not sure if the Fractal Flame model is the most intuitive one. OTOH, I don't know if my model is intuitive at all :P
+
+Refactoring:
+  ✔ Fix the app under Qt 5.15 and remove deprecations @done (20-06-13 18:31)
+  ✘ Turn ModelEntry into an universal solution for accessing data @cancelled (20-06-13 18:48)
+  ✘ Split the data updating part of DocumentModel into multiple files @cancelled (20-06-13 18:45)
+  ☐ Add a view model for transforms
+    This needs to expose getters/setters for translation/rotation/scale values. It can still operate directly on matrices, but it sounds like having a cache of translation/rotation/scale would be a good idea.
+
+    Note: This requires the UI to exclusively use the view model to manipulate transforms! Otherwise the cache will be stale. (Shouldn't be a problem.)
+
+An interactive flame editor:
+  Build out the current UI to add more and more interactive editing facilities.
+  This is the 1.0 milestone.
+
+  Milestones:
+    ☐ You can edit the structure on your own
+      MVP ends here.
+    ☐ You can create own palettes
+    ☐ You can manipulate the blends in a WYSIWYG way
+    ☐ The app is fast enough to support interactive editing well
+    ☐ You can undo and redo
+
+  Structure UI:
+    ✘ Implement the DragDrop component @cancelled (20-04-24 13:54)
+      If you don't put a DragHandler _inside_ a DropArea, things are easy to use out of the box.
+    ✔ Implement the list of Blends @done (20-04-25 21:27)
+    ✔ Implement a Formula picker @done (20-04-25 21:27)
+    ✔ Implement showing Blends and their Formulas @done (20-04-25 21:28)
+    ✘ Implement the Blend preview @cancelled (20-04-26 14:30)
+    ✔ Implement showing/hiding/isolating Blends @done (20-04-27 18:54)
+      Isolating needs some thought. Alt-click?
+    ✔ Implement modifying the weight of a Blend @done (20-04-25 21:28)
+    ✔ Implement adding a Blend with a Formula @done (20-04-25 21:28)
+    ✔ Implement removing a Blend @done (20-04-25 21:28)
+    ✔ Implement drag'n'drop of Blends and Formulas @done (20-04-25 21:28)
+    ☐ Implement reordering of Store elements @low
+    ☐ Implement the Store part of moving Blends/Formulas around @low
+
+  Blend UI:
+    ✔ Display the list of formulas @done (20-05-02 23:09)
+    ✔ Implement the Formula preview @done (20-05-02 23:09)
+    ☐ Implement showing/hiding/isolating Formulas
+    ✔ Implement modifying the weight of a Formula @done (20-05-02 23:09)
+      This should work the same way as Blends do — ratios, not verbatim weights.
+    ✔ Implement adding a Formula to a Blend @done (20-04-25 21:29)
+    ✔ Implement removing a Formula @done (20-05-02 23:09)
+    ✔ Implement randomizing parameters of Formulas @done (20-05-02 23:09)
+    ☐ Implement named parameters for Formulas @low
+    ☐ Implement editing parameters @low
+    ✔ Design a ratio editor @done (20-04-25 21:29)
+      Because weights are going to be ratios, there could be a control to conveniently edit them. Right now there are going to be text boxes, but this is not ideal for exploration or interactive editing.
+      Some sliders or sth would be nice.
+
+  User-defined color palettes:
+    ☐ Add palette editor in the UI
+    ☐ Add coloring method support in the AST
+    ☐ Add coloring method support in core
+
+  Interactive Blend Editor:
+    ☐ Add a component for rendering formulas and Store entries
+      ChaosKit will have an interactive Blend editor. Also, formulas need previews in the add dialog. Both features are essentially rendering a part of the AST, so there needs to be a component for that.
+      ☐ Make a component to render named formulas
+        Probably this can be based on an Image with an ImageProvider.
+      ☐ Implement a stable string representation of a Store ID
+      ☐ Make a component to render a Store entry
+    ☐ Design how the pre/post transform controls should look like
+    ☐ Implement translation for post transforms
+    ☐ Implement scaling for post transforms
+    ☐ Implement rotation for post transforms
+    ☐ Implement all transformations for pre transforms
+
+  GPU-based Generator:
+    ☐ Implement a basic Metal-based Generator
+      Theoretically we don't have to use OpenCL. As I'm developing on Mac, Metal should do the trick. Hardcoding things is fine at this point.
+    ☐ Design a device management UI
+      There should be a possibility to pick the device to generate on. At least have CPU/GPU switch. Later maybe multi-GPU, but not sure how to test.
+    ☐ Implement the device management UI
+    ✔ Design a Generator API for implementations other than Metal @done (20-07-05 18:07)
+      I don't want ChaosKit to be Mac only. That means there should be more implementations of the generator — OpenCL, CUDA, Vulkan?
+      Hope this will be more clear after we have the Metal generator.
+    ✔ Port the CPU generator to the Generator API @done (20-07-05 18:08)
+    ☐ Port the Metal generator to the Generator API
+    ☐ Add more implementations @future
+
+--- ✄ -----------------------
+
+Improved state management:
+  ☐ Implement OperationManager @large
+    This is about mutating the Store using reversible operations. It's critical
+    for undo/redo.
+  ☐ Make the UI use the OperationManager
+
+--- ✄ -----------------------
+
+Virtual Blend Groups:
+  This would provide entities that would be implemented in terms of multiple blends. For example, one could implement a configurable Sierpinski gasket using a VBG that resolves to multiple linear blends.
+
+  The user would interact with VBGs using a specialized UI providing some easy-to-use knobs. As they would be presented similarly to regular blends in the UI, VBGs would also have a weight that would be used to set weights of inner blends accordingly. For the example of the Sierpinski gasket, the UI would allow to configure the number of edges of the gasket, the scale factor and translation.
+
+  Additionally, there needs to be a possibility to "flatten" a VBG into a set of regular blends. This will allow to fine-tune each blend individually, but will lose the automatic configurability.
+
+  ☐ Design a Virtual Blend Group structure
+    We don't have to implement a dedicated AST for that as VBGs can still "compile" into the AST.
+  ☐ Design the VBG proto
+  ☐ Implement the Sierpinski gasket VBG
+  ☐ Implement the symmetry VBG
+  ☐ Implement UI for selecting a VBG
+  ☐ Implement UI for the Sierpinski gasket VBG
+  ☐ Implement UI for the symmetry VBG
+
+
+Full control over randomization:
+  Implement something that could be called "System Templates". The way it would
+  work is to provide a System-like tree as a template to randomize things in.
+  It's a superset of a regular System tree, because it should include support for ranges (e.g. generate 2–4 blends like this subtree).
+
+  To be specified.
+
+  Open questions:
+    ☐ Should this be limited to the system, or does it make sense to expand to the document as well?
+      Rationale: randomizing color palettes
+
+  ☐ Design system templates
+  ☐ Implement system templates
+
+Scaling controls:
+  ☐ Implement scaling controls
+    The idea here is to have a setting with "Stretch", "Fill", "Fit". That would help with non-square aspect ratios.
+
+---- ✄ -----------------------
+
+Done — Have something to draw images:
+  Because this is a huge project, I want to focus on getting things done and be able to actually draw something instead of having the perfect UI. I'm still having the final goal in mind; I just want to get there in smaller steps.
+
+  This is about building an app that randomizes the image using a single button. At first — static palette, static image size.
+
+  Prerequisites:
+    ✔ Build a solid development foundation @done (20-01-05 17:26)
+      ✔ The ability to iterate on QML without rebuilding @done (19-12-15 19:21)
+      ✔ Filesystem-based hot reloading @done (20-01-03 18:43)
+    ✔ Implement a basic theme to customize further @done (20-01-05 19:35)
+      Based on Material Dark theme. Fonts should be embedded. Should include
+      definitions for fonts and colors.
+
+  Milestones:
+    ✔ Display a window that draws an image @done (20-01-05 19:45)
+    ✔ You can randomize the parameters of that image @done (20-01-07 21:42)
+      MVP ends here.
+    ✔ Add the AST inspector for debugging @done (20-01-07 21:42)
+    ✔ You can export the image @done (20-01-19 14:09)
+    ✔ You can customize gamma/exposure/vibrancy @done (20-02-04 21:32)
+    ✔ You can change the palette of the image from a list @done (20-02-23 21:32)
+      ✔ Add coloring method support in the AST @done (20-02-08 16:45)
+      ✔ Add coloring method support in SimpleInterpreter @done (20-02-09 17:07)
+      ✔ Add noop, single-color and distance coloring methods to the library @done (20-02-16 18:54)
+      ✔ Add coloring methods to structures @done (20-02-16 20:15)
+      ✔ Implement randomization of coloring methods @done (20-02-16 21:51)
+      ✔ Implement color maps @done (20-02-22 22:08)
+      ✔ Add palette pickers with pre-made palettes in the UI @done (20-02-23 21:32)
+      ✔ Import Flam3 palettes @done (20-02-23 21:32)
+    ✔ You can set the size of the image @done (20-02-29 17:44)
+      ✔ Add the notion of image size to Document @done (20-02-29 16:53)
+      ✔ Add an editor for the image size @done (20-02-29 16:58)
+    ✔ Implement pan and zoom @done (20-03-29 18:45)
+      ✔ Implement pan and zoom via gestures @done (20-03-29 18:45)
+      ✘ Implement pan and zoom via scroll wheel and drag/drop @cancelled (20-03-29 16:47)
+      ✔ Implement keyboard shortcuts for zoom @done (20-03-09 23:15)
+    ✔ You can save/load projects from files @done (20-04-04 16:59)
+      ✔ Define protobuf/capnproto schema for the document @done (20-04-04 16:14)
+      ✔ Implement serialization/deserialization of core structures @done (20-04-04 16:14)
+      ✔ Add file support in the UI @done (20-04-04 16:14)
+      ✔ Add modified marker and the Save action in the UI @done (20-04-04 16:59)
+      ✔ Add the New action to the UI @done (20-04-04 17:35)

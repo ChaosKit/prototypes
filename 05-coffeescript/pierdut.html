@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Pierdut</title>
+    <link rel="stylesheet" type="text/css" href="pierdut.css">
+</head>
+<body>
+    <div class="container row">
+        <div class="canvas-container column">
+            <canvas id="Canvas" width="1024" height="1024"></canvas>
+            <div class="state" id="State"></div>
+        </div>
+        <div class="control-container column">
+            <div class="controls offset">
+                <button id="Toggle">Stop</button>
+                <button id="Step">Step</button>
+                <button id="Save">Save</button>
+            </div>
+
+            <div class="controls offset">
+                <label>
+                    <input type="checkbox" id="Rendering" checked>
+                    Rendering
+                </label>
+            </div>
+
+            <div class="controls">
+                Formula:
+                <select id="Formula">
+                    <option value="SimpleBlended">Simple Blended</option>
+                    <option value="Blended">Blended</option>
+                    <option value="SimpleBranched" selected>Simple Branched</option>
+                    <option value="Branched">Branched</option>
+                    <option value="DeJong">DeJong</option>
+                    <option value="GumowskiMira">Gumowski–Mira</option>
+                    <option value="Tinkerbell">Tinkerbell</option>
+                    <option value="Trigonometric">Trigonometric</option>
+                    <option value="DoubleTrigonometric">Double Trigonometric</option>
+                    <option value="Quadratic">Quadratic</option>
+                    <option value="Unnamed">Unnamed</option>
+                </select>
+            </div>
+
+            <div class="controls offset">
+                <button id="Randomize">Randomize Parameters</button>
+            </div>
+
+            <div class="controls">
+                Preset:
+                <select id="Preset">
+                    <optgroup label="One Grid">
+                        <option value="Binary">Binary</option>
+                        <option value="Monochrome" selected>Black &amp; White</option>
+                        <option value="Emerald">Emerald</option>
+                        <option value="Cherry">Cherry</option>
+                    </optgroup>
+                    <optgroup label="Debug">
+                        <option value="PositionLinear">Position (Linear)</option>
+                        <option value="Velocity">Velocity</option>
+                        <option value="Acceleration">Acceleration</option>
+                    </optgroup>
+                    <optgroup label="RGB">
+                        <option value="PVA">PVA</option>
+                        <option value="APV">APV</option>
+                        <option value="VAP">VAP</option>
+                    </optgroup>
+                    <optgroup label="HSL">
+                        <option value="Classic">Classic</option>
+                        <option value="DeepRed">Deep Red</option>
+                        <option value="IceBlue">Ice Blue</option>
+                        <option value="Testing">Testing</option>
+                        <option value="Custom">Custom</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div id="CustomControls" class="controls hidden">
+                <label>
+                    Base color:
+                    <input type="color" id="Color" value="#ff0000" />
+                </label>
+                <label>
+                    Color shift:
+                    <input type="range" id="ColorShiftSlider" min="0" max="360" value="120" />
+                    <input type="number" id="ColorShift" min="0" max="360" value="120" />
+                </label>
+            </div>
+            <div class="controls offset">
+                <label>
+                    <input type="checkbox" id="Inverted">
+                    Inverted
+                </label>
+            </div>
+
+            <div class="controls offset">
+                TTL:
+                <input type="range" id="TTLSlider" min="2" max="500" value="20" />
+                <input type="number" min="2" max="500" value="20" id="TTL">
+            </div>
+
+            <div class="controls">
+                <label>
+                    <input type="checkbox" id="Correction">
+                    <strong>Color correction</strong>
+                    <a id="ResetCorrection" href="#reset">Reset</a>
+                </label>
+            </div>
+            <div class="controls offset">
+                <input type="range" orient="vertical" class="vertical" id="CorrectionA" min="0" max="100" value="25">
+                <input type="range" orient="vertical" class="vertical" id="CorrectionB" min="0" max="100" value="50">
+                <input type="range" orient="vertical" class="vertical" id="CorrectionC" min="0" max="100" value="75">
+            </div>
+
+            <strong>View bounds</strong>
+            <a id="ResetBounds" href="#reset">Reset</a>
+
+            <div class="controls">
+                Zoom level:
+                <input type="number" min="0" max="15" value="8" id="ViewZoom">
+            </div>
+            <div class="controls offset">
+                Center:
+                <input type="number" min="-16" max="16" value="0" step="0.1" id="ViewX">
+                <input type="number" min="-16" max="16" value="0" step="0.1" id="ViewY">
+            </div>
+
+            <strong>Generation bounds</strong>
+
+            <div class="controls">
+                <label>
+                    <input type="checkbox" id="SyncBounds" />
+                    Sync with view bounds
+                </label>
+            </div>
+            <div class="controls">
+                Zoom level:
+                <input type="number" min="0" max="15" value="8" id="Zoom">
+            </div>
+            <div class="controls">
+                Center:
+                <input type="number" min="-16" max="16" value="0" step="0.1" id="CenterX">
+                <input type="number" min="-16" max="16" value="0" step="0.1" id="CenterY">
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="pierdut.js"></script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+unit main;
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, wynik, jpeg, ComCtrls;
+
+type
+  TForm1 = class(TForm)
+    Label1: TLabel;
+    Label2: TLabel;
+    Label3: TLabel;
+    Wzor: TComboBox;
+    Label4: TLabel;
+    Label5: TLabel;
+    Ziarno: TEdit;
+    Rozciagnij: TCheckBox;
+    Label7: TLabel;
+    Jakosc: TComboBox;
+    Generuj: TButton;
+    Button1: TButton;
+    Button2: TButton;
+    Zapisz: TButton;
+    Label8: TLabel;
+    WymiarX: TEdit;
+    WymiarY: TEdit;
+    Label9: TLabel;
+    Przerwij: TButton;
+    Kolorowanie: TTrackBar;
+    Label10: TLabel;
+    PrzesuniecieSlider: TTrackBar;
+    Label6: TLabel;
+    Przesuniecie: TEdit;
+    procedure GenerujClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+    procedure ZapiszClick(Sender: TObject);
+    procedure ZiarnoChange(Sender: TObject);
+    procedure WymiarXChange(Sender: TObject);
+    procedure WymiarYChange(Sender: TObject);
+    procedure PrzerwijClick(Sender: TObject);
+    procedure PrzesuniecieSliderChange(Sender: TObject);
+    procedure PrzesuniecieChange(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+  private
+    DoPola: Boolean;
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+// Procedura przepuszczaj¹ca tylko liczby
+procedure TylkoLiczby(var Pole: TEdit);
+var
+  temp,i: Integer;
+  str: String;
+begin
+  if not TryStrToInt(Pole.Text, temp) then
+  begin
+    temp:= Pole.SelStart;
+    str:= '';
+
+    if Pole.Text <> '' then
+      for i:=1 to Length(Pole.Text) do
+        if Pole.Text[i] in ['0'..'9'] then
+          str:= str + Pole.Text[i];
+
+    Pole.Text:= str;
+
+    // Stawianie kursora na poprzednim miejscu
+    if temp > 0 then
+      Pole.SelStart:= temp-1;
+  end;
+end;
+
+// Kopiowanie numeru z aktualnego atraktora
+procedure TForm1.Button1Click(Sender: TObject);
+begin
+  if ImageForm.currseed <> -1 then
+    Ziarno.Text:= inttostr(ImageForm.currseed);
+end;
+
+// Czyszczenie pola
+procedure TForm1.Button2Click(Sender: TObject);
+begin
+  Ziarno.Text:= '';
+end;
+
+procedure TForm1.ZapiszClick(Sender: TObject);
+var
+  jpg: TJPEGImage;
+  name: String;
+begin
+  if ImageForm.currseed <> -1 then
+  begin
+    ImageForm.SaveDialog.InitialDir:= GetCurrentDir;
+
+    case Wzor.ItemIndex of
+    0: name:= 'quadratic-';
+    1: name:= 'trig-';
+    2: name:= 'henon-';
+    3: name:= 'dejong-mod-';
+    4: name:= 'dejong-';
+    5: name:= 'tinkerbell-';
+    6: name:= 'ikeda-';
+    end;
+    name:= name + inttostr(ImageForm.currseed);
+
+    ImageForm.SaveDialog.FileName:= name;
+
+    if ImageForm.SaveDialog.Execute then
+    begin
+      if Pos('.jp', ImageForm.SaveDialog.FileName) <> 0 then
+      begin
+        jpg:= TJpegImage.Create;
+        jpg.Assign(ImageForm.Image.Picture.Bitmap);
+        jpg.SaveToFile(ImageForm.SaveDialog.FileName);
+        jpg.Free;
+      end
+      else
+        ImageForm.Image.Picture.SaveToFile(ImageForm.SaveDialog.FileName);
+    end;
+  end;
+end;
+
+procedure TForm1.GenerujClick(Sender: TObject);
+var
+  seed, x,y, q: Integer;
+  quality: Double;
+  allowed: Boolean;
+begin
+  if Ziarno.Text = '' then seed:= -1
+  else seed:= strtoint(Ziarno.Text);
+
+  quality:= 0.2;
+  case Jakosc.ItemIndex of
+  0: quality:= 2;
+  1: quality:= 1;
+  2: quality:= 0.5;
+  3: quality:= 0.2;
+  4: quality:= 0.01;
+  end;
+
+  x:= strtoint(WymiarX.Text);
+  y:= strtoint(WymiarY.Text);
+  allowed:= true;
+
+  // Pokazywanie ostrze¿enia je¿eli bêdzie du¿o iteracji
+  if (2 * quality * (x*y)/262144) > 8 then
+  begin
+    q:= MessageBox(Handle, 'Wygenerowanie atraktora o podanych parametrach zajmie du¿o czasu i pamiêci RAM.'+#13#10+'Czy na pewno chcesz kontynuowaæ?', 'Ostrze¿enie', MB_YESNO + MB_DEFBUTTON2 + MB_ICONWARNING);
+    allowed:= (q = IDYES);
+  end;
+
+  if allowed then
+  begin
+    ImageForm.ZrobAtraktor(x, y, seed, Wzor.ItemIndex, Kolorowanie.Position, quality, (PrzesuniecieSlider.Position * 0.01), Rozciagnij.Checked);
+  end;
+end;
+
+procedure TForm1.ZiarnoChange(Sender: TObject);
+begin
+  TylkoLiczby(Ziarno);
+end;
+
+procedure TForm1.WymiarXChange(Sender: TObject);
+begin
+  TylkoLiczby(WymiarX);
+end;
+
+procedure TForm1.WymiarYChange(Sender: TObject);
+begin
+  TylkoLiczby(WymiarY);
+end;
+
+procedure TForm1.PrzerwijClick(Sender: TObject);
+begin
+  if ImageForm.th.IsRunning then
+    ImageForm.Close;
+end;
+
+procedure TForm1.PrzesuniecieSliderChange(Sender: TObject);
+begin
+  if not DoPola then
+    Przesuniecie.Text:= FormatFloat('0.00', PrzesuniecieSlider.Position * 0.01);
+end;
+
+procedure TForm1.PrzesuniecieChange(Sender: TObject);
+var
+  val: Double;
+begin
+  if TryStrToFloat(Przesuniecie.Text, val) then
+    if (val >= 0) and (val <= 1) then
+    begin
+      DoPola:= true;
+      PrzesuniecieSlider.Position:= trunc(val*100);
+      DoPola:= false;
+    end;
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  DoPola:= false;
+end;
+
+end.

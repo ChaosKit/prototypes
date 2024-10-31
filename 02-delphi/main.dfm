@@ -1,0 +1,238 @@
+object Form1: TForm1
+  Left = 206
+  Top = 225
+  BorderStyle = bsSingle
+  Caption = 'Generator dziwnych atraktor'#243'w'
+  ClientHeight = 234
+  ClientWidth = 339
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = False
+  OnCreate = FormCreate
+  DesignSize = (
+    339
+    234)
+  PixelsPerInch = 96
+  TextHeight = 13
+  object Label4: TLabel
+    Left = 8
+    Top = 8
+    Width = 41
+    Height = 13
+    Caption = 'Funkcja:'
+  end
+  object Label5: TLabel
+    Left = 8
+    Top = 35
+    Width = 83
+    Height = 13
+    Caption = 'Numer atraktora:'
+  end
+  object Label7: TLabel
+    Left = 8
+    Top = 62
+    Width = 36
+    Height = 13
+    Caption = 'Jako'#347#263':'
+  end
+  object Label8: TLabel
+    Left = 8
+    Top = 89
+    Width = 69
+    Height = 13
+    Caption = 'Rozdzielczo'#347#263':'
+  end
+  object Label9: TLabel
+    Left = 276
+    Top = 89
+    Width = 6
+    Height = 13
+    Caption = 'x'
+  end
+  object Label10: TLabel
+    Left = 8
+    Top = 117
+    Width = 100
+    Height = 13
+    Caption = 'Stopie'#324' kolorowania:'
+  end
+  object Label6: TLabel
+    Left = 8
+    Top = 147
+    Width = 103
+    Height = 13
+    Caption = 'Przesuni'#281'cie kolor'#243'w:'
+  end
+  object Wzor: TComboBox
+    Left = 62
+    Top = 5
+    Width = 269
+    Height = 21
+    Anchors = [akLeft, akTop, akRight]
+    ItemHeight = 13
+    ItemIndex = 3
+    TabOrder = 0
+    Text = 'Peter de Jong - zmodyfikowany'
+    Items.Strings = (
+      'Kwadratowa'
+      'Trygonometryczna'
+      'Henon'
+      'Peter de Jong - zmodyfikowany'
+      'Peter de Jong'
+      'Tinkerbell'
+      'Ikeda')
+  end
+  object Ziarno: TEdit
+    Left = 96
+    Top = 32
+    Width = 93
+    Height = 21
+    Hint = 
+      'Liczba u'#380'ywana do wygenerowania parametr'#243'w atraktora. Je'#380'eli bra' +
+      'k, zostanie wygenerowana losowo.'
+    Anchors = [akLeft, akTop, akRight]
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 1
+    OnChange = ZiarnoChange
+  end
+  object Rozciagnij: TCheckBox
+    Left = 8
+    Top = 173
+    Width = 74
+    Height = 17
+    Caption = 'Rozci'#261'gnij'
+    Checked = True
+    State = cbChecked
+    TabOrder = 3
+  end
+  object Jakosc: TComboBox
+    Left = 64
+    Top = 59
+    Width = 269
+    Height = 21
+    Anchors = [akLeft, akTop, akRight]
+    ItemHeight = 13
+    ItemIndex = 3
+    TabOrder = 2
+    Text = 'Niska'
+    Items.Strings = (
+      'Bardzo wysoka'
+      'Wysoka'
+      #346'rednia'
+      'Niska'
+      'Bardzo niska')
+  end
+  object Generuj: TButton
+    Left = 8
+    Top = 200
+    Width = 96
+    Height = 25
+    Anchors = [akLeft, akBottom]
+    Caption = 'Generuj'
+    TabOrder = 4
+    OnClick = GenerujClick
+  end
+  object Button1: TButton
+    Left = 195
+    Top = 30
+    Width = 68
+    Height = 25
+    Anchors = [akTop, akRight]
+    Caption = 'Z atraktora'
+    TabOrder = 5
+    OnClick = Button1Click
+  end
+  object Button2: TButton
+    Left = 269
+    Top = 30
+    Width = 64
+    Height = 25
+    Anchors = [akTop, akRight]
+    Caption = 'Wyczy'#347#263
+    TabOrder = 6
+    OnClick = Button2Click
+  end
+  object Zapisz: TButton
+    Left = 120
+    Top = 200
+    Width = 105
+    Height = 25
+    Anchors = [akLeft, akBottom]
+    Caption = 'Zapisz atraktor'
+    TabOrder = 7
+    OnClick = ZapiszClick
+  end
+  object WymiarX: TEdit
+    Left = 229
+    Top = 86
+    Width = 41
+    Height = 21
+    TabOrder = 8
+    Text = '512'
+    OnChange = WymiarXChange
+  end
+  object WymiarY: TEdit
+    Left = 288
+    Top = 86
+    Width = 41
+    Height = 21
+    TabOrder = 9
+    Text = '512'
+    OnChange = WymiarYChange
+  end
+  object Przerwij: TButton
+    Left = 240
+    Top = 200
+    Width = 89
+    Height = 25
+    Anchors = [akLeft, akBottom]
+    Caption = 'Przerwij'
+    TabOrder = 10
+    OnClick = PrzerwijClick
+  end
+  object Kolorowanie: TTrackBar
+    Left = 120
+    Top = 112
+    Width = 210
+    Height = 25
+    Hint = 
+      'Stopie'#324', w jakim atraktor zostanie pokolorowany. Im wi'#281'kszy, tym' +
+      ' d'#322'u'#380'ej zajmie kolorowanie.'
+    Anchors = [akLeft, akTop, akRight]
+    Max = 3
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 11
+    ThumbLength = 18
+  end
+  object PrzesuniecieSlider: TTrackBar
+    Left = 120
+    Top = 144
+    Width = 169
+    Height = 25
+    Hint = 'Zmienia kolory atraktora.'
+    Anchors = [akLeft, akTop, akRight]
+    Max = 100
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 12
+    ThumbLength = 18
+    TickStyle = tsManual
+    OnChange = PrzesuniecieSliderChange
+  end
+  object Przesuniecie: TEdit
+    Left = 296
+    Top = 144
+    Width = 33
+    Height = 21
+    Anchors = [akTop, akRight]
+    TabOrder = 13
+    Text = '0,00'
+    OnChange = PrzesuniecieChange
+  end
+end

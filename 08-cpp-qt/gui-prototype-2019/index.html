@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="tree.css" />
+    <script
+      src="https://kit.fontawesome.com/2b80db17b2.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  </head>
+  <body>
+    <section class="sidebar elevation-8">
+      <article v-on:click="defocus">
+        <h1>Structure</h1>
+        <div class="tree">
+          <div
+            class="blend"
+            v-for="(blend, i) in blends"
+            v-bind:class="{selected: selectedIndex.blend === i}"
+            v-on:click="selectBlend(i)"
+          >
+            <div class="blend__preview">
+              <div class="preview">
+                <img src="placeholder.png" width="40" height="40" />
+              </div>
+            </div>
+            <div class="blend__formulas">
+              <div
+                class="blend__formula"
+                v-for="(formula, j) in blend.formulas"
+              >
+                {{ formula }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel two-buttons">
+          <button v-on:click="openPicker()" aria-label="Add blend">
+            <i class="fas fa-plus"></i>
+            <span>Add blend</span>
+          </button>
+          <button
+            v-bind:disabled="selectedIndex.blend == null"
+            v-on:click="removeBlend()"
+          >
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+        <div
+          class="formula-picker elevation-24 opaque"
+          v-bind:class="{hidden: !pickerOpen}"
+        >
+          <div
+            class="formula-picker__formula preview"
+            v-for="formula in allFormulas"
+            v-on:click="addBlend(formula)"
+          >
+            <img src="placeholder-big.png" />
+            <span class="preview__name">{{ formula }}</span>
+          </div>
+        </div>
+      </article>
+
+      <article>
+        <h1>Properties</h1>
+      </article>
+    </section>
+
+    <script src="tree.js"></script>
+  </body>
+</html>
