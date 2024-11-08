@@ -50,5 +50,5 @@ Feel free to ask questions, I'm happy to answer.
 
 Unless mentioned otherwise:
 
-* All the software (code and binaries) is licensed under the 2-Clause BSD License.
-* All the images and outputs are licensed under CC BY-SA 4.0.
+* All the software (code and binaries) is licensed under the [2-Clause BSD License](./LICENSE.software.txt).
+* All the images and outputs are licensed under [CC BY-SA 4.0](./LICENSE.outputs.txt).
