@@ -1,67 +1,68 @@
 body {
-    font-family: 'Lucida Grande', sans-serif;
-    font-size: 12px;
+  font-family: "Lucida Grande", sans-serif;
+  font-size: 12px;
+  margin: 0;
 }
 
 button {
-    margin: 0 5px;
+  margin: 0 5px;
 }
 
 select {
-    margin-right: 10px;
+  margin-right: 10px;
 }
 
 label {
-    display: block;
+  display: block;
 }
 
 input.vertical {
-    -webkit-appearance: slider-vertical;
-    writing-mode: bt-lr;
-    display: inline-block;
-    width: 30px;
-    height: 130px;
+  -webkit-appearance: slider-vertical;
+  writing-mode: bt-lr;
+  display: inline-block;
+  width: 30px;
+  height: 130px;
 }
 
 .state {
-    color: #aaa;
-    font-size: 9px;
-    font-family: monospace;
-    margin-top: 10px;
-    word-break: break-all;
+  color: #aaa;
+  font-size: 9px;
+  font-family: monospace;
+  margin-top: 10px;
+  word-break: break-all;
 }
 
 .hidden {
-    display: none;
-}
-
-.row {
-    overflow: hidden;
-}
-.column {
-    float: left;
-    margin: 0 20px;
+  display: none;
 }
 
 .container {
-    margin: 50px auto;
-    width: 1354px;
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  padding: 0 20px;
 }
 
-.canvas-container { width: 1024px; }
-.control-container { width: 250px; }
+.canvas-container {
+  flex-grow: 1;
+}
+.control-container {
+  flex-basis: 220px;
+  flex-shrink: 0;
+}
 
 .controls {
-    margin: 10px 0;
+  margin: 10px 0;
 }
 .controls.offset {
-    margin-bottom: 40px;
+  margin-bottom: 40px;
 }
 
 #Canvas {
-    margin: auto;
-    display: block;
-    border: 1px solid #000;
-    border-bottom-width: 2px;
-    border-radius: 2px;
+  aspect-ratio: 1;
+  border-radius: 2px;
+  display: block;
+  margin: auto;
+  max-width: 100%;
+  max-height: 100vh;
 }
