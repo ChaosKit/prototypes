@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Pierdut</title>
-    <link rel="stylesheet" type="text/css" href="pierdut.css">
+    <title>ChaosKit β</title>
+    <link rel="stylesheet" type="text/css" href="chaoskit.css">
 </head>
 <body>
     <div class="container row">
@@ -52,7 +52,7 @@
                 <select id="Preset">
                     <optgroup label="One Grid">
                         <option value="Binary">Binary</option>
-                        <option value="Monochrome" selected>Black &amp; White</option>
+                        <option value="Monochrome">Black &amp; White</option>
                         <option value="Emerald">Emerald</option>
                         <option value="Cherry">Cherry</option>
                     </optgroup>
@@ -63,7 +63,7 @@
                     </optgroup>
                     <optgroup label="RGB">
                         <option value="PVA">PVA</option>
-                        <option value="APV">APV</option>
+                        <option value="APV" selected>APV</option>
                         <option value="VAP">VAP</option>
                     </optgroup>
                     <optgroup label="HSL">
@@ -95,8 +95,8 @@
 
             <div class="controls offset">
                 TTL:
-                <input type="range" id="TTLSlider" min="2" max="500" value="20" />
-                <input type="number" min="2" max="500" value="20" id="TTL">
+                <input type="range" id="TTLSlider" min="2" max="500" value="50" />
+                <input type="number" min="2" max="500" value="50" id="TTL">
             </div>
 
             <div class="controls">
@@ -144,6 +144,6 @@
             </div>
         </div>
     </div>
-    <script type="text/javascript" src="pierdut.js"></script>
+    <script type="text/javascript" src="chaoskit.js"></script>
 </body>
 </html>

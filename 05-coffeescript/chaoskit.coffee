@@ -388,7 +388,7 @@ class Reactor
   constructor: (@attractor, options = {}) ->
     @bounds = options.bounds || new Bounds(-2, 2, -2, 2)
     @count = options.count || 10000
-    @ttl = options.ttl || 20
+    @ttl = options.ttl || 50
     @cache = null
 
     @onparticlemove = (particle, reactor) ->
@@ -454,9 +454,9 @@ velocityGrid = new Grid(size)
 accelerationGrid = new Grid(size)
 renderer = new Renderer(size, ctx)
 
-input = {"formula":"Unnamed","params":[0.4355084184519855,-0.23559170975080246,-1.3620484834403603,-0.6547066518285254,0.5852320106598246,0.3428832489223792,-1.9372635523978978,1.3320091601999255,0.5626223396408057,0.7998837324627617],"ttl":500,"bounds":{"left":-2,"right":2,"top":-2,"bottom":2,"width":4,"height":4},"viewBounds":{"left":-2.3,"right":1.7,"top":-2.4,"bottom":1.6,"width":4,"height":4},"correction":{"enabled":false,"a":0.25,"b":0.5,"c":0.75}}
+# input = {"formula":"Unnamed","params":[0.4355084184519855,-0.23559170975080246,-1.3620484834403603,-0.6547066518285254,0.5852320106598246,0.3428832489223792,-1.9372635523978978,1.3320091601999255,0.5626223396408057,0.7998837324627617],"ttl":500,"bounds":{"left":-2,"right":2,"top":-2,"bottom":2,"width":4,"height":4},"viewBounds":{"left":-2.3,"right":1.7,"top":-2.4,"bottom":1.6,"width":4,"height":4},"correction":{"enabled":false,"a":0.25,"b":0.5,"c":0.75}}
 # input = {"formula":"DeJong","params":[1.6623940085992217,-0.6880100890994072,1.4784153904765844,1.7967103328555822,1.3117856830358505,-1.7860524505376816,0.037012672051787376,0.9399532228708267,0.9259882022161037,0.6146395546384156],"ttl":20,"bounds":{"left":-2,"right":2,"top":-2,"bottom":2,"width":4,"height":4},"viewBounds":{"left":-2,"right":2,"top":-2,"bottom":2,"width":4,"height":4},"correction":{"enabled":false,"a":0.25,"b":0.5,"c":0.75}}
-attractor = Attractor(Formula[input.formula], input.params)
+# attractor = Attractor(Formula[input.formula], input.params)
 
 emulatedFormula = (_params, x, y) ->
   # Formula.SimpleBlended([
@@ -482,7 +482,7 @@ emulatedFormula = (_params, x, y) ->
 # attractor = Attractor(emulatedFormula)
 # attractor = Attractor(Formula.DeJong, [1.6623940085992217,-0.6880100890994072,1.4784153904765844,1.7967103328555822])
 # attractor = Attractor(Formula.DeJong, [-1.9292301883127383,-1.7559409159631594,-1.8413772506711874,-1.972643807513176])
-# attractor = randomizeAttractor(Formula.SimpleBranched, Params.Standard)
+attractor = randomizeAttractor(Formula.SimpleBranched, Params.Standard)
 
 zoomLevel = 2.0
 viewZoomLevel = 2.0
@@ -583,7 +583,7 @@ correctionCurve = StandardCurve(0.25, 0.5, 0.75)
 
     PixelMapper.HSL h, s, l
 
-pixelMapper = Presets.Monochrome GridModifier.None
+pixelMapper = Presets.APV GridModifier.None
 
 running = false
 renderingEnabled = true
