@@ -621,18 +621,20 @@ refreshingOperation = (fn) ->
   accelerationGrid.clear()
   renderer.render(pixelMapper) if renderingEnabled && !running
 
+getState = ->
+  formula: $('Formula').value
+  params: reactor.attractor.params
+  ttl: $('TTL').valueAsNumber
+  bounds: reactor.bounds
+  viewBounds: viewBounds
+  correction:
+    enabled: $('Correction').checked
+    a: $('CorrectionA').value * 0.01
+    b: $('CorrectionB').value * 0.01
+    c: $('CorrectionC').value * 0.01
+
 showState = ->
-  $('State').innerText = JSON.stringify
-    formula: $('Formula').value
-    params: reactor.attractor.params
-    ttl: $('TTL').valueAsNumber
-    bounds: reactor.bounds
-    viewBounds: viewBounds
-    correction:
-      enabled: $('Correction').checked
-      a: $('CorrectionA').value * 0.01
-      b: $('CorrectionB').value * 0.01
-      c: $('CorrectionC').value * 0.01
+  $('State').innerText = JSON.stringify getState()
 
 updateFormula = ->
   formulaName = $('Formula').value
@@ -785,3 +787,13 @@ $('ResetCorrection').onclick = (e) ->
   updateMapper()
 
 showState()
+
+# Integration with pondiverse.com
+
+window.getPondiverseCreation = ->
+  type: 'chaoskit'
+  data: JSON.stringify getState()
+  image: canvas.toDataURL('image/png')
+
+import('./pondiverse.js').then (p) ->
+  p.addPondiverseButton()
