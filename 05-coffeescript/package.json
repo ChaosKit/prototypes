@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build": "coffee -c -m pierdut.coffee",
+    "watch": "coffee -c -w -m pierdut.coffee"
+  },
+  "devDependencies": {
+    "coffeescript": "^2.7.0"
+  }
+}
