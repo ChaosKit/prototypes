@@ -795,5 +795,5 @@ window.getPondiverseCreation = ->
   data: JSON.stringify getState()
   image: canvas.toDataURL('image/png')
 
-import('./pondiverse.js').then (p) ->
+import('https://www.pondiverse.com/script/pondiverse.js').then (p) ->
   p.addPondiverseButton()

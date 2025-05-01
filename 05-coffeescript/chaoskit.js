@@ -1108,7 +1108,7 @@
     };
   };
 
-  import('./pondiverse.js').then(function(p) {
+  import('https://www.pondiverse.com/script/pondiverse.js').then(function(p) {
     return p.addPondiverseButton();
   });
 
