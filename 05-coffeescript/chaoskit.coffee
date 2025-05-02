@@ -40,6 +40,9 @@ hex2rgb = (hex) ->
   g: parseInt(matches[2], 16)
   b: parseInt(matches[3], 16)
 
+roughlyEquals = (a, b) ->
+  Math.abs(a - b) < 0.0001
+
 class Size
   constructor: (@width, @height) ->
     @area = @width * @height
@@ -54,6 +57,15 @@ class Bounds
 
   contain: (x, y) ->
     x >= @left && x <= @right && y >= @top && y <= @bottom
+
+  @fromZoomAndCenter: (zoomLevel, centerX, centerY) ->
+    zoom = Math.pow(2, 5 - zoomLevel * 0.5)
+    new Bounds(-zoom + centerX, zoom + centerX, -zoom + centerY, zoom + centerY)
+
+  @areValid: (bounds) ->
+    bounds != null \
+    && (['left', 'right', 'top', 'bottom'].every (key) -> typeof bounds[key] == 'number') \
+    && bounds.left <= bounds.right && bounds.top <= bounds.bottom
 
 class Grid
   constructor: (@size) ->
@@ -595,16 +607,13 @@ run = ->
 
 toggle = $('Toggle')
 
-@setRunning = (r) ->
+setRunning = (r) ->
   running = r
   toggle.innerText = if running then 'Stop' else 'Start'
   requestAnimationFrame(run) if running
 
 toggle.onclick = ->
   setRunning(!running)
-
-# Make sure we're running when not requested to stop
-setRunning(window.location.search != '?stop')
 
 $('Step').onclick = ->
   running = false
@@ -627,6 +636,12 @@ getState = ->
   ttl: $('TTL').valueAsNumber
   bounds: reactor.bounds
   viewBounds: viewBounds
+  preset: if $('Preset').value == 'Custom'
+    color: $('Color').value
+    colorShift: $('ColorShift').value
+  else
+    $('Preset').value
+  inverted: $('Inverted').checked
   correction:
     enabled: $('Correction').checked
     a: $('CorrectionA').value * 0.01
@@ -635,6 +650,94 @@ getState = ->
 
 showState = ->
   $('State').innerText = JSON.stringify getState()
+
+extractZoomAndCenter = (bounds) ->
+  x = (bounds.left + bounds.right) / 2
+  y = (bounds.top + bounds.bottom) / 2
+
+  # Validate zoom level
+  z1 = bounds.right - x
+  z2 = bounds.bottom - y
+  z3 = x - bounds.left
+  z4 = y - bounds.top
+
+  if roughlyEquals(z1, z2) && roughlyEquals(z2, z3) && roughlyEquals(z3, z4)
+    zoom: Math.round((-Math.log2(z1) + 5) * 2)
+    centerX: x
+    centerY: y
+  else
+    null
+
+updateFromState = (json) ->
+  shouldRefresh = false
+
+  # Update formula
+  validFormulas = Array.from($('Formula').options).map (o) -> o.value
+  if validFormulas.includes(json.formula)
+    $('Formula').value = json.formula
+
+    # Update params if the formula is valid
+    reactor.attractor = Attractor(Formula[json.formula], json.params)
+    shouldRefresh = true
+
+  # Update TTL
+  if typeof json.ttl == 'number' && Number.isInteger(json.ttl)
+    clampedTtl = Math.max(2, Math.min(500, json.ttl))
+    $('TTLSlider').value = clampedTtl
+    $('TTL').value = clampedTtl
+    reactor.ttl = clampedTtl
+    shouldRefresh = true
+
+  # Update bounds
+  if Bounds.areValid json.bounds
+    zac = extractZoomAndCenter(json.bounds)
+    if zac
+      {zoom, centerX, centerY} = zac
+      $('Zoom').value = zoom
+      $('CenterX').value = centerX
+      $('CenterY').value = centerY
+      reactor.bounds = Bounds.fromZoomAndCenter(zoom, centerX, centerY)
+      shouldRefresh = true
+  if Bounds.areValid json.viewBounds
+    zac = extractZoomAndCenter(json.viewBounds)
+    if zac
+      {zoom, centerX, centerY} = zac
+      $('ViewZoom').value = zoom
+      $('ViewX').value = centerX
+      $('ViewY').value = centerY
+      reactor.viewBounds = Bounds.fromZoomAndCenter(zoom, centerX, centerY)
+      shouldRefresh = true
+  $('SyncBounds').checked = false
+
+  # Update rendering
+  validPresets = Array.from($('Formula').options).map (o) -> o.value
+  if validPresets.includes(json.preset)
+    $('Preset').value = json.preset
+    shouldRefresh = true
+  else if json.preset && json.preset.color && json.preset.colorShift
+    $('Preset').value = 'Custom'
+    $('Color').value = json.preset.color
+    $('ColorShift').value = json.preset.colorShift
+    shouldRefresh = true
+
+  if json.inverted != null
+    $('Inverted').checked = !!json.inverted
+    shouldRefresh = true
+
+  if json.correction?.enabled
+    $('Correction').checked = true
+    if json.correction.a != null
+      $('CorrectionA').value = Math.floor(json.correction.a * 100)
+    if json.correction.b != null
+      $('CorrectionB').value = Math.floor(json.correction.b * 100)
+    if json.correction.c != null
+      $('CorrectionC').value = Math.floor(json.correction.c * 100)
+    shouldRefresh = true
+
+  # Refresh the thing.
+  if shouldRefresh
+    refreshingOperation ->
+      updateMapper()
 
 updateFormula = ->
   formulaName = $('Formula').value
@@ -689,7 +792,7 @@ createCustomMapper = ->
     PixelMapper.HSL h, s, l
 
 updateBounds = ->
-  viewZoomLevel = Math.pow(2, 5 - $('ViewZoom').valueAsNumber * 0.5)
+  viewZoomLevel = $('ViewZoom').valueAsNumber
   viewCenterPoint =
     x: $('ViewX').valueAsNumber
     y: $('ViewY').valueAsNumber
@@ -698,14 +801,14 @@ updateBounds = ->
     zoomLevel = viewZoomLevel
     centerPoint = viewCenterPoint
   else
-    zoomLevel = Math.pow(2, 5 - $('Zoom').valueAsNumber * 0.5)
+    zoomLevel = $('Zoom').valueAsNumber
     centerPoint =
       x: $('CenterX').valueAsNumber
       y: $('CenterY').valueAsNumber
 
   refreshingOperation ->
-    reactor.bounds = new Bounds(-zoomLevel + centerPoint.x, zoomLevel + centerPoint.x, -zoomLevel + centerPoint.y, zoomLevel + centerPoint.y)
-    viewBounds = new Bounds(-viewZoomLevel + viewCenterPoint.x, viewZoomLevel + viewCenterPoint.x, -viewZoomLevel + viewCenterPoint.y, viewZoomLevel + viewCenterPoint.y)
+    reactor.bounds = Bounds.fromZoomAndCenter(zoomLevel, centerPoint.x, centerPoint.y)
+    viewBounds = Bounds.fromZoomAndCenter(viewZoomLevel, viewCenterPoint.x, viewCenterPoint.y)
 
   showState()
 
@@ -788,12 +891,28 @@ $('ResetCorrection').onclick = (e) ->
 
 showState()
 
+# Debugging tools
+window.updateFromState = updateFromState
+
+# Handling of URL params
+searchParams = new URLSearchParams(window.location.search)
+creationId = searchParams.get 'creation'
+shouldStop = searchParams.has 'stop'
+
+setRunning(!shouldStop && creationId == null)
+
 # Integration with pondiverse.com
 
-window.getPondiverseCreation = ->
-  type: 'chaoskit'
-  data: JSON.stringify getState()
-  image: canvas.toDataURL('image/png')
+import('https://www.pondiverse.com/pondiverse.js').then (p) ->
+  p.addPondiverseButton ->
+    type: 'chaoskit'
+    data: JSON.stringify getState()
+    image: canvas.toDataURL('image/png')
 
-import('https://www.pondiverse.com/script/pondiverse.js').then (p) ->
-  p.addPondiverseButton()
+  if creationId != null
+    p.fetchPondiverseCreation(creationId).then (creation) ->
+      state = JSON.parse creation.data
+      updateFromState state
+      setRunning !shouldStop
+    .catch ->
+      setRunning !shouldStop
