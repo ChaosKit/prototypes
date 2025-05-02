@@ -705,7 +705,7 @@ updateFromState = (json) ->
       $('ViewZoom').value = zoom
       $('ViewX').value = centerX
       $('ViewY').value = centerY
-      reactor.viewBounds = Bounds.fromZoomAndCenter(zoom, centerX, centerY)
+      viewBounds = Bounds.fromZoomAndCenter(zoom, centerX, centerY)
       shouldRefresh = true
   $('SyncBounds').checked = false
 
